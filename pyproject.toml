@@ -1,0 +1,24 @@
+[project]
+name = "fb-music-gen1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "George W", email = "username@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "audiocraft==1.1.0",
+    "torch>=2.1.0",
+    "torchaudio>=2.1.0",
+]
+
+[project.scripts]
+fb-music-gen1 = "fb_music_gen1:main"
+
+[build-system]
+requires = ["uv_build>=0.12.2,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.extra-build-dependencies]
+xformers = ["torch"]
