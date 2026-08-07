@@ -83,6 +83,7 @@ python cli.py "slow ambient synth pads, 80 bpm, dreamy" --skip-llm
 | `--llm-model` | Ollama model used for prompt writing               | `llama3.2`  |
 | `--out`       | Output `.wav` file path                            | `output.wav`|
 | `--skip-llm`  | Use the theme as the MusicGen prompt directly       | off         |
+| `--device`    | Torch device: `auto`, `cpu`, `mps`, `cuda`          | `auto`      |
 
 ## Project structure
 

@@ -15,7 +15,13 @@ Model sizes (VRAM roughly needed):
     large  ~12GB  - best quality, needs a real GPU
 """
 
+import os
 from pathlib import Path
+
+# Some ops used by MusicGen aren't yet implemented for the MPS (Apple GPU)
+# backend; this makes torch fall back to CPU for just those ops instead of
+# raising. Must be set before torch touches MPS.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 import torch
 import torchaudio
@@ -25,12 +31,26 @@ from audiocraft.models import MusicGen
 _MODEL_CACHE = {}
 
 
-def _load_model(model_size: str) -> MusicGen:
-    """Load (and cache) a MusicGen model by size."""
-    if model_size not in _MODEL_CACHE:
+def _resolve_device(device: str = "auto") -> str:
+    """Pick the best available torch device. `MusicGen.get_pretrained` only
+    auto-detects CUDA, so on Apple Silicon it would otherwise default to CPU."""
+    if device != "auto":
+        return device
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
+def _load_model(model_size: str, device: str = "auto") -> MusicGen:
+    """Load (and cache) a MusicGen model by size and device."""
+    resolved_device = _resolve_device(device)
+    cache_key = (model_size, resolved_device)
+    if cache_key not in _MODEL_CACHE:
         model_name = f"facebook/musicgen-{model_size}"
-        _MODEL_CACHE[model_size] = MusicGen.get_pretrained(model_name)
-    return _MODEL_CACHE[model_size]
+        _MODEL_CACHE[cache_key] = MusicGen.get_pretrained(model_name, device=resolved_device)
+    return _MODEL_CACHE[cache_key]
 
 
 def generate_music(
@@ -38,10 +58,11 @@ def generate_music(
     duration: int = 10,
     model_size: str = "small",
     out_path: Path = Path("output.wav"),
+    device: str = "auto",
 ) -> Path:
     """Generate audio from `prompt` and save it to `out_path`. Returns the path."""
 
-    model = _load_model(model_size)
+    model = _load_model(model_size, device=device)
     model.set_generation_params(duration=duration)
 
     # MusicGen expects a list of prompts (batch of 1 here)

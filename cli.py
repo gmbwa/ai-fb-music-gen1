@@ -58,6 +58,13 @@ def parse_args():
         action="store_true",
         help="Skip the LLM step and use the theme directly as the MusicGen prompt",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="auto",
+        choices=["auto", "cpu", "mps", "cuda"],
+        help="Torch device for MusicGen (default: auto-detect CUDA/MPS/CPU)",
+    )
     return parser.parse_args()
 
 
@@ -78,6 +85,7 @@ def main():
         duration=args.duration,
         model_size=args.model,
         out_path=Path(args.out),
+        device=args.device,
     )
 
     print(f"[✓] Done. Saved to {out_path}")
